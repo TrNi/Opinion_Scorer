@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Ranking Task</title>
+    <style>
+        body { font-family: sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .hidden { display: none; }
+        .image-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: flex-start; }
+        .image-container { flex: 1; border: 1px solid #ccc; padding: 10px; text-align: center; }
+        .reference { border: 2px solid #007bff; background-color: #f8f9fa; }
+        img { max-width: 100%; height: auto; display: block; margin: 0 auto 10px; }
+        .rank-options { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+        .rank-options label { cursor: pointer; padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .rank-options input:checked + span { font-weight: bold; color: blue; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
+        button:disabled { background-color: #ccc; }
+        .error { color: red; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <h1>Welcome</h1>
+        <p>Please enter your Subject ID to begin.</p>
+        <input type="text" id="subject-id-input" placeholder="Enter Subject ID (e.g., user123)">
+        <button onclick="startSession()">Start</button>
+        <p id="login-error" class="error"></p>
+    </div>
+
+    <div id="task-screen" class="hidden">
+        <h2>Set <span id="current-set-display"></span></h2>
+        <p>Rank the 3 images on the right (1=Best, 3=Worst) relative to the Reference image.</p>
+        
+        <div id="images-container">
+            </div>
+
+        <button id="next-btn" onclick="nextBatch()">Next Set</button>
+        <p id="validation-error" class="error"></p>
+    </div>
+
+    <div id="completion-screen" class="hidden">
+        <h2>Section Complete</h2>
+        <p>Thank you. Data saved successfully.</p>
+        <div id="next-section-option" class="hidden">
+            <p>Would you like to proceed to the next set of images?</p>
+            <button onclick="loadNextSection()">Yes, continue</button>
+            <button onclick="finishExperiment()">No, I'm done</button>
+        </div>
+        <div id="final-message" class="hidden">
+            <p>You have completed all available tasks. You may close this window.</p>
+        </div>
+    </div>
+
+<script>
+    // --- CONFIGURATION ---
+    const GOOGLE_SCRIPT_URL = 'YOUR_WEB_APP_URL_HERE'; 
+    const CSV_URL = 'https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/images.csv';
+    
+    // --- STATE ---
+    let allData = []; // Parsed CSV data
+    let currentSubjectId = '';
+    let currentSectionChar = 'A'; // Starts with A, then B, C...
+    let currentBatchIndex = 0;
+    let sectionData = []; // Filtered data for current user + section
+    let responses = []; // Store responses for current section
+
+    // --- FETCH & PARSE CSV ---
+    async function fetchCSV() {
+        const response = await fetch(CSV_URL);
+        const text = await response.text();
+        // Simple CSV parser (assumes no commas in URLs)
+        const lines = text.trim().split('\n');
+        const headers = lines[0].split(',');
+        
+        return lines.slice(1).map(line => {
+            const values = line.split(',');
+            return headers.reduce((obj, header, index) => {
+                obj[header.trim()] = values[index].trim();
+                return obj;
+            }, {});
+        });
+    }
+
+    // --- LOGIC ---
+    async function startSession() {
+        const input = document.getElementById('subject-id-input').value.trim();
+        if (!input) return;
+        
+        currentSubjectId = input;
+        allData = await fetchCSV();
+        
+        loadSection('A');
+    }
+
+    function loadSection(sectionChar) {
+        currentSectionChar = sectionChar;
+        // Filter rows that match "{subjectID}_{sectionChar}"
+        // e.g. "user123_A"
+        const searchString = `${currentSubjectId}_${sectionChar}`;
+        sectionData = allData.filter(row => row.set_id === searchString);
+
+        if (sectionData.length === 0) {
+            // No data found for this section
+            showCompletion(false);
+            return;
+        }
+
+        // Reset for new section
+        currentBatchIndex = 0;
+        responses = [];
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('completion-screen').classList.add('hidden');
+        document.getElementById('task-screen').classList.remove('hidden');
+        
+        renderBatch();
+    }
+
+    function renderBatch() {
+        const container = document.getElementById('images-container');
+        container.innerHTML = '';
+        document.getElementById('validation-error').innerText = '';
+        
+        const row = sectionData[currentBatchIndex];
+        document.getElementById('current-set-display').innerText = `${currentBatchIndex + 1} / ${sectionData.length}`;
+
+        // 1. Reference Image
+        const refHTML = `
+            <div class="image-container reference">
+                <strong>Reference</strong>
+                <img src="${row.ref_image}" alt="Reference">
+            </div>
+        `;
+
+        // 2. Candidates (Images 1, 2, 3)
+        let candidatesHTML = '';
+        ['img_1', 'img_2', 'img_3'].forEach((key, idx) => {
+            candidatesHTML += `
+                <div class="image-container">
+                    <strong>Image ${idx + 1}</strong>
+                    <img src="${row[key]}" alt="Candidate ${idx + 1}">
+                    <div class="rank-options" data-img-idx="${idx}">
+                        <label><input type="radio" name="rank_img_${idx}" value="1" onclick="handleExclusive(this)"> <span>1st</span></label>
+                        <label><input type="radio" name="rank_img_${idx}" value="2" onclick="handleExclusive(this)"> <span>2nd</span></label>
+                        <label><input type="radio" name="rank_img_${idx}" value="3" onclick="handleExclusive(this)"> <span>3rd</span></label>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = `<div class="image-row">${refHTML}${candidatesHTML}</div>`;
+    }
+
+    // --- EXCLUSIVE RANKING LOGIC ---
+    window.handleExclusive = function(clickedRadio) {
+        const rankValue = clickedRadio.value;
+        const currentImgIdx = clickedRadio.name; // e.g. rank_img_0
+
+        // Find all other radios with the SAME rank value (1, 2, or 3)
+        const allRadios = document.querySelectorAll(`input[type="radio"][value="${rankValue}"]`);
+        
+        allRadios.forEach(radio => {
+            // If it's the same rank, but a DIFFERENT image, uncheck it
+            if (radio !== clickedRadio && radio.name !== currentImgIdx) {
+                radio.checked = false;
+            }
+        });
+    };
+
+    // --- NEXT / SUBMIT ---
+    window.nextBatch = function() {
+        // Validation: Must select 1, 2, and 3
+        const selected = document.querySelectorAll('input[type="radio"]:checked');
+        if (selected.length < 3) {
+            document.getElementById('validation-error').innerText = "Please assign a unique rank to all 3 images.";
+            return;
+        }
+
+        // Store Response
+        const currentRankings = {};
+        selected.forEach(radio => {
+            const imgIdx = radio.name.replace('rank_img_', ''); // 0, 1, 2
+            currentRankings[`Image_${parseInt(imgIdx)+1}`] = radio.value;
+        });
+
+        responses.push({
+            setId: sectionData[currentBatchIndex].set_id,
+            rankings: currentRankings
+        });
+
+        // Check if more batches exist in this section
+        if (currentBatchIndex < sectionData.length - 1) {
+            currentBatchIndex++;
+            renderBatch();
+        } else {
+            submitData();
+        }
+    };
+
+    function submitData() {
+        const btn = document.getElementById('next-btn');
+        btn.innerText = "Saving...";
+        btn.disabled = true;
+
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                subject_id: currentSubjectId,
+                responses: responses
+            })
+        })
+        .then(() => {
+            // Check if NEXT section exists (e.g. if we just did A, check if B exists)
+            const nextChar = String.fromCharCode(currentSectionChar.charCodeAt(0) + 1);
+            const nextSearchString = `${currentSubjectId}_${nextChar}`;
+            const hasNextSection = allData.some(row => row.set_id === nextSearchString);
+            
+            showCompletion(hasNextSection);
+        })
+        .catch(err => alert("Error saving data: " + err));
+    }
+
+    function showCompletion(hasNext) {
+        document.getElementById('task-screen').classList.add('hidden');
+        document.getElementById('completion-screen').classList.remove('hidden');
+        
+        if (hasNext) {
+            document.getElementById('next-section-option').classList.remove('hidden');
+            document.getElementById('final-message').classList.add('hidden');
+        } else {
+            document.getElementById('next-section-option').classList.add('hidden');
+            document.getElementById('final-message').classList.remove('hidden');
+        }
+    }
+
+    window.loadNextSection = function() {
+        const nextChar = String.fromCharCode(currentSectionChar.charCodeAt(0) + 1);
+        loadSection(nextChar);
+    };
+
+    window.finishExperiment = function() {
+        document.getElementById('next-section-option').classList.add('hidden');
+        document.getElementById('final-message').classList.remove('hidden');
+    };
+</script>
+
+</body>
+</html>
