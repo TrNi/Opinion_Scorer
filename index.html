@@ -7,7 +7,7 @@
     <style>
         /* High Density Reset */
         body { font-family: sans-serif; background-color: #eee; margin: 0; padding: 5px; color: #111; }
-        .container { max-width: 98vw; margin: 0 auto; background: white; padding: 10px; border-radius: 4px; }
+        .container { max-width: 99vw; margin: 0 auto; background: white; padding: 10px; border-radius: 4px; }
         .hidden { display: none !important; }
         
         /* Compact Header */
@@ -20,12 +20,12 @@
         .empty-cell { visibility: hidden; } /* Keeps the grid structure but hides content */
 
         /* Image Cards */
-        .image-card { display: flex; flex-direction: column; align-items: center; border: 1px solid #ccc; padding: 5px; background: #fafafa; border-radius: 4px; }
-        .reference-card { border: 2px solid #007bff; background: #f0f8ff; }
-        .img-title { font-weight: bold; margin-bottom: 4px; font-size: 0.85em; text-align: center; }
+        .image-card { display: flex; flex-direction: column; align-items: center; border: 1px solid #ccc; padding: 1px; background: #fafafa; border-radius: 2px; }
+        .reference-card { border: 1px solid #007bff; background: #f0f8ff; }
+        .img-title { font-weight: bold; margin-bottom: 3px; font-size: 0.85em; text-align: center; }
         
-        /* Maximize Image Height dynamically so it fits on screen */
-        img { width: 100%; height: 36vh; object-fit: contain; margin-bottom: 8px; background-color: #ddd; }
+        /* Maximize Image Height dynamically */
+        img { width: 100%; height: 36vh; object-fit: contain; margin-bottom: 7px; background-color: #ddd; }
 
         /* Compact Radio Buttons */
         .rank-options { display: flex; gap: 6px; justify-content: center; width: 100%; }
@@ -66,7 +66,7 @@
 
     <div id="task-screen" class="hidden">
         <div class="header-instruction">
-            <p><strong>Instruction:</strong> Rank model predictions by closeness to the GT blurry image. (1 = Best/Closest, 3 = Worst).</p>
+            <p><strong>Instruction:</strong> Rank model predictions by closeness to the GT blurry image. (1 = Best/Closest, 4 = Worst).</p>
             <div class="slide-counter">Slide <span id="current-slide">0</span> / <span id="total-slides">0</span></div>
         </div>
         
@@ -90,7 +90,7 @@
 <script>
     // --- CONFIGURATION ---
     const CSV_URL = 'images.csv';
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwfqReghoS2CrQI0QXc9FLsGEK88nacIoU7Ln57gZ7Na7x8fr9-m8wE0qjGt7Ch3vWcWA/exec';
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwfqReghoS2CrQI0QXc9FLsGEK88nacIoU7Ln57gZ7Na7x8fr9-m8wE0qjGt7Ch3vWcWA/exec'; 
 
     // --- STATE ---
     let subjectId = '';
@@ -100,11 +100,11 @@
     let currentSlideIndex = 0;
 
     const titles = [
-        "Sharp, In-Focus Image",
         "Blurry GT Image",
         "Model 1 Prediction",
         "Model 2 Prediction",
-        "Model 3 Prediction"
+        "Model 3 Prediction",
+        "Model 4 Prediction"
     ];
 
     async function startSession() {
@@ -117,7 +117,6 @@
             return;
         }
         
-        // Generate a unique Session ID using the current timestamp
         sessionId = `sess_${Date.now()}`;
         errorDiv.innerText = "Loading CSV...";
 
@@ -156,8 +155,8 @@
                             <img src="${url}" alt="${title}">`;
             if (isModel) {
                 html += `<div class="rank-options">`;
-                // Ranks 1 to 3
-                [1, 2, 3].forEach(rank => {
+                // Ranks 1 to 4
+                [1, 2, 3, 4].forEach(rank => {
                     html += `<label>
                                 <input type="radio" name="model_${modelIndex}" value="${rank}" onclick="handleExclusive(this)">
                                 <span>Rank ${rank}</span>
@@ -170,14 +169,14 @@
         };
 
         // Top Row: Col 1, Col 2, Col 3
-        grid.innerHTML += buildCard(titles[0], getUrl(rowData[0]), false, null, false); // Sharp
-        grid.innerHTML += buildCard(titles[1], getUrl(rowData[1]), false, null, true);  // GT 
-        grid.innerHTML += buildCard(titles[2], getUrl(rowData[2]), true, 1, false);     // Model 1
+        grid.innerHTML += buildCard(titles[0], getUrl(rowData[0]), false, null, true);  // GT (Reference)
+        grid.innerHTML += buildCard(titles[1], getUrl(rowData[1]), true, 1, false);     // Model 1
+        grid.innerHTML += buildCard(titles[2], getUrl(rowData[2]), true, 2, false);     // Model 2
 
         // Bottom Row: Col 1 (Empty), Col 2, Col 3
         grid.innerHTML += `<div class="empty-cell"></div>`;                             // Empty
-        grid.innerHTML += buildCard(titles[3], getUrl(rowData[3]), true, 2, false);     // Model 2
-        grid.innerHTML += buildCard(titles[4], getUrl(rowData[4]), true, 3, false);     // Model 3
+        grid.innerHTML += buildCard(titles[3], getUrl(rowData[3]), true, 3, false);     // Model 3
+        grid.innerHTML += buildCard(titles[4], getUrl(rowData[4]), true, 4, false);     // Model 4
     }
 
     window.handleExclusive = function(clickedRadio) {
@@ -190,7 +189,7 @@
 
     window.nextSlide = function() {
         const currentSlideData = allSlides[currentSlideIndex];
-        const numModels = 3; // Fixed to 3 based on your new 5-image constraint
+        const numModels = 4; // Updated to 4 models
 
         const selectedRadios = document.querySelectorAll('input[type="radio"]:checked');
         if (selectedRadios.length < numModels) {
@@ -210,7 +209,7 @@
             session_id: sessionId,
             subject_id: subjectId,
             slide: currentSlideIndex + 1,
-            sharp_url: currentSlideData[0] || '',
+            gt_url: currentSlideData[0] || '', // Changed to log GT instead of Sharp
             rankings: slideRankings
         };
 
@@ -250,4 +249,3 @@
 
 </body>
 </html>
-
