@@ -189,7 +189,7 @@
         const numModels = 4;
 
         const selectedRadios = document.querySelectorAll('input[type="radio"]:checked');
-        if (selectedRadios.length < numModels) {
+        if (selectedRadios.length < numModels - 1) {
             document.getElementById('validation-error').innerText = `Assign a unique rank to all ${numModels} models.`;
             return;
         }
@@ -242,3 +242,4 @@
 
 </body>
 </html>
+
