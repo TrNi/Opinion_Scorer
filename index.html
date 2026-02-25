@@ -5,82 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Model Prediction Ranking Task</title>
     <style>
-        /* High Density Reset */
-        body { font-family: sans-serif; background-color: #eee; margin: 0; padding: 5px; color: #111; }
-        .container { max-width: 99vw; margin: 0 auto; background: white; padding: 10px; border-radius: 4px; }
+        /* Extreme High-Density Reset */
+        body { font-family: sans-serif; background-color: #fff; margin: 0; padding: 0; color: #111; overflow-x: hidden; }
+        .container { width: 100vw; max-width: 100%; margin: 0; padding: 4px; box-sizing: border-box; }
         .hidden { display: none !important; }
-        
-        /* Compact Header */
-        .header-instruction { background-color: #e9ecef; padding: 8px 12px; border-left: 4px solid #007bff; margin-bottom: 10px; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center; }
-        .header-instruction p { margin: 0; }
-        .slide-counter { font-weight: bold; font-size: 1.1em; color: #007bff; }
 
-        /* 3-Column Grid Layout */
-        .image-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
-        .empty-cell { visibility: hidden; } /* Keeps the grid structure but hides content */
+        /* 3-Column Grid Layout with Minimal Margins */
+        .image-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
 
-        /* Image Cards */
-        .image-card { display: flex; flex-direction: column; align-items: center; border: 1px solid #ccc; padding: 1px; background: #fafafa; border-radius: 2px; }
-        .reference-card { border: 1px solid #007bff; background: #f0f8ff; }
-        .img-title { font-weight: bold; margin-bottom: 3px; font-size: 0.85em; text-align: center; }
+        /* Image Cards (No Padding, No Borders) */
+        .image-card { display: flex; flex-direction: column; align-items: center; width: 100%; margin: 0; padding: 0; }
+        .img-title { font-weight: bold; margin-bottom: 2px; font-size: 0.9em; text-align: center; background: #fff; width: 100%; }
         
-        /* Maximize Image Height dynamically */
-        img { width: 100%; height: 36vh; object-fit: contain; margin-bottom: 7px; background-color: #ddd; }
+        /* Maximize Image Size - Keeps aspect ratio, fills horizontal space */
+        img { width: 100%; height: 42vh; object-fit: contain; display: block; margin: 0; }
 
         /* Compact Radio Buttons */
-        .rank-options { display: flex; gap: 6px; justify-content: center; width: 100%; }
-        .rank-options label { cursor: pointer; padding: 4px 6px; border: 1px solid #bbb; border-radius: 3px; background: white; font-size: 0.8em; }
+        .rank-options { display: flex; gap: 4px; justify-content: center; width: 100%; margin-top: 4px; margin-bottom: 4px; }
+        .rank-options label { cursor: pointer; padding: 4px 8px; border: 1px solid #ccc; border-radius: 2px; background: #f9f9f9; font-size: 0.85em; }
         .rank-options input[type="radio"] { display: none; }
         .rank-options input[type="radio"]:checked + span { color: #007bff; font-weight: bold; }
         .rank-options label:has(input[type="radio"]:checked) { border-color: #007bff; background-color: #e6f2ff; }
 
-        /* Controls */
-        .controls { display: flex; justify-content: center; gap: 15px; align-items: center; margin-top: 5px; }
-        button { padding: 10px 20px; font-size: 14px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; }
+        /* UI Panel in Bottom Left */
+        .ui-panel { display: flex; flex-direction: column; justify-content: center; padding: 15px; background: #f4f6f8; border: 1px solid #d1d5da; border-radius: 4px; height: 42vh; box-sizing: border-box; }
+        .instruction-text { font-size: 0.95em; line-height: 1.4; margin-bottom: 15px; }
+        .slide-counter { font-weight: bold; font-size: 1.2em; color: #007bff; text-align: center; margin-bottom: 20px; }
+        
+        /* Buttons inside UI Panel */
+        .controls { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        button { padding: 12px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; width: 100%; box-sizing: border-box;}
         button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #999; cursor: not-allowed; }
         .submit-btn { background-color: #dc3545; }
         .submit-btn:hover { background-color: #a71d2a; }
-        .error { color: #dc3545; font-weight: bold; font-size: 0.9em; margin-left: 10px; }
+        .error { color: #dc3545; font-weight: bold; font-size: 0.9em; text-align: center; }
 
         /* Login Screen */
-        .login-group { margin-bottom: 10px; }
-        .login-group input { width: 300px; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; }
+        #login-screen { padding: 20px; max-width: 400px; margin: 50px auto; background: #f9f9f9; border: 1px solid #ddd; border-radius: 8px;}
+        .login-group { margin-bottom: 15px; }
+        .login-group input { width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="login-screen">
-        <h2>Start Evaluation Session</h2>
+        <h2 style="margin-top:0;">Start Session</h2>
         <div class="login-group">
-            <label for="subject-id">Subject ID:</label><br>
+            <label for="subject-id">Subject ID:</label>
             <input type="text" id="subject-id" placeholder="e.g., subject_01">
         </div>
         <div class="login-group">
-            <label for="b2-key">B2 Authorization Token:</label><br>
-            <input type="password" id="b2-key" placeholder="Enter B2 download auth token">
+            <label for="b2-key">B2 Authorization Token:</label>
+            <input type="password" id="b2-key" placeholder="Enter B2 token">
         </div>
         <button onclick="startSession()">Load Images</button>
-        <div id="login-error" class="error" style="margin-left:0; margin-top:10px;"></div>
+        <div id="login-error" class="error" style="margin-top:10px;"></div>
     </div>
 
     <div id="task-screen" class="hidden">
-        <div class="header-instruction">
-            <p><strong>Instruction:</strong> Rank model predictions by closeness to the GT blurry image. (1 = Best/Closest, 4 = Worst).</p>
-            <div class="slide-counter">Slide <span id="current-slide">0</span> / <span id="total-slides">0</span></div>
-        </div>
-        
         <div class="image-grid" id="image-grid">
             </div>
-
-        <div class="controls">
-            <button onclick="nextSlide()" id="next-btn">Next Slide & Save</button>
-            <button onclick="confirmSubmit()" class="submit-btn">Finish & Submit</button>
-            <div id="validation-error" class="error"></div>
-        </div>
     </div>
 
-    <div id="completion-screen" class="hidden" style="text-align: center; padding: 40px;">
+    <div id="completion-screen" class="hidden" style="text-align: center; padding: 50px;">
         <h2>Session Complete</h2>
         <p>Thank you. All your responses have been logged securely.</p>
         <p>You may now close this window.</p>
@@ -130,7 +119,6 @@
 
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('task-screen').classList.remove('hidden');
-            document.getElementById('total-slides').innerText = allSlides.length;
             
             renderSlide();
         } catch (err) {
@@ -139,23 +127,19 @@
     }
 
     function renderSlide() {
-        document.getElementById('current-slide').innerText = currentSlideIndex + 1;
-        document.getElementById('validation-error').innerText = '';
-        
         const rowData = allSlides[currentSlideIndex];
         const grid = document.getElementById('image-grid');
-        grid.innerHTML = '';
+        grid.innerHTML = ''; // Clear previous
 
         const getUrl = (url) => url ? `${url}?Authorization=${encodeURIComponent(b2AuthToken)}` : '';
 
-        const buildCard = (title, url, isModel, modelIndex, isReference) => {
-            if (!url) return `<div class="image-card" style="visibility: hidden;"></div>`;
-            let html = `<div class="image-card ${isReference ? 'reference-card' : ''}">
+        const buildCard = (title, url, isModel, modelIndex) => {
+            if (!url) return `<div></div>`;
+            let html = `<div class="image-card">
                             <div class="img-title">${title}</div>
                             <img src="${url}" alt="${title}">`;
             if (isModel) {
                 html += `<div class="rank-options">`;
-                // Ranks 1 to 4
                 [1, 2, 3, 4].forEach(rank => {
                     html += `<label>
                                 <input type="radio" name="model_${modelIndex}" value="${rank}" onclick="handleExclusive(this)">
@@ -168,15 +152,30 @@
             return html;
         };
 
-        // Top Row: Col 1, Col 2, Col 3
-        grid.innerHTML += buildCard(titles[0], getUrl(rowData[0]), false, null, true);  // GT (Reference)
-        grid.innerHTML += buildCard(titles[1], getUrl(rowData[1]), true, 1, false);     // Model 1
-        grid.innerHTML += buildCard(titles[2], getUrl(rowData[2]), true, 2, false);     // Model 2
+        // UI Panel HTML (Replaces the empty bottom-left cell)
+        const uiPanelHTML = `
+            <div class="ui-panel">
+                <div class="instruction-text">
+                    <strong>Instruction:</strong><br>Rank model predictions by closeness to the GT blurry image.<br>(1 = Best/Closest, 4 = Worst).
+                </div>
+                <div class="slide-counter">Slide ${currentSlideIndex + 1} / ${allSlides.length}</div>
+                <div class="controls">
+                    <button onclick="nextSlide()" id="next-btn">Next Slide & Save</button>
+                    <button onclick="confirmSubmit()" class="submit-btn">Finish & Submit</button>
+                    <div id="validation-error" class="error"></div>
+                </div>
+            </div>
+        `;
 
-        // Bottom Row: Col 1 (Empty), Col 2, Col 3
-        grid.innerHTML += `<div class="empty-cell"></div>`;                             // Empty
-        grid.innerHTML += buildCard(titles[3], getUrl(rowData[3]), true, 3, false);     // Model 3
-        grid.innerHTML += buildCard(titles[4], getUrl(rowData[4]), true, 4, false);     // Model 4
+        // Inject Top Row
+        grid.innerHTML += buildCard(titles[0], getUrl(rowData[0]), false, null); // GT
+        grid.innerHTML += buildCard(titles[1], getUrl(rowData[1]), true, 1);     // Model 1
+        grid.innerHTML += buildCard(titles[2], getUrl(rowData[2]), true, 2);     // Model 2
+
+        // Inject Bottom Row
+        grid.innerHTML += uiPanelHTML;                                           // UI Panel in Bottom Left
+        grid.innerHTML += buildCard(titles[3], getUrl(rowData[3]), true, 3);     // Model 3
+        grid.innerHTML += buildCard(titles[4], getUrl(rowData[4]), true, 4);     // Model 4
     }
 
     window.handleExclusive = function(clickedRadio) {
@@ -189,11 +188,11 @@
 
     window.nextSlide = function() {
         const currentSlideData = allSlides[currentSlideIndex];
-        const numModels = 4; // Updated to 4 models
+        const numModels = 4;
 
         const selectedRadios = document.querySelectorAll('input[type="radio"]:checked');
-        if (selectedRadios.length < numModels) {
-            document.getElementById('validation-error').innerText = `Please assign a unique rank to all ${numModels} models.`;
+        if (selectedRadios.length < numModels-1) {
+            document.getElementById('validation-error').innerText = `Assign a unique rank to all ${numModels} models.`;
             return;
         }
 
@@ -204,12 +203,11 @@
         let slideRankings = {};
         selectedRadios.forEach(radio => { slideRankings[radio.name] = radio.value; });
 
-        // Send data for THIS slide immediately
         const payload = {
             session_id: sessionId,
             subject_id: subjectId,
             slide: currentSlideIndex + 1,
-            gt_url: currentSlideData[0] || '', // Changed to log GT instead of Sharp
+            gt_url: currentSlideData[0] || '', 
             rankings: slideRankings
         };
 
@@ -218,12 +216,9 @@
             body: JSON.stringify(payload)
         })
         .then(() => {
-            btn.disabled = false;
-            btn.innerText = "Next Slide & Save";
-            
             if (currentSlideIndex < allSlides.length - 1) {
                 currentSlideIndex++;
-                renderSlide();
+                renderSlide(); // Re-renders grid, automatically resetting UI state
             } else {
                 showCompletion();
             }
@@ -231,7 +226,7 @@
         .catch(err => {
             btn.disabled = false;
             btn.innerText = "Next Slide & Save";
-            document.getElementById('validation-error').innerText = "Network error saving data. Check your connection.";
+            document.getElementById('validation-error').innerText = "Network error saving data.";
         });
     };
 
