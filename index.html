@@ -20,31 +20,28 @@
         /* Maximize Image Size - Keeps aspect ratio, fills horizontal space */
         img { width: 100%; height: 42vh; object-fit: contain; display: block; margin: 0; }
 
-        /* Compact Radio Buttons */
+        /* Compact Radio Buttons - Strictly Grayscale */
         .rank-options { display: flex; gap: 4px; justify-content: center; width: 100%; margin-top: 4px; margin-bottom: 4px; }
         .rank-options label { cursor: pointer; padding: 4px 8px; border: 1px solid #ccc; border-radius: 2px; background: #f9f9f9; font-size: 0.85em; }
         .rank-options input[type="radio"] { display: none; }
-        .rank-options input[type="radio"]:checked + span { color: #007bff; font-weight: bold; }
-        .rank-options label:has(input[type="radio"]:checked) { border-color: #007bff; background-color: #e6f2ff; }
+        .rank-options input[type="radio"]:checked + span { color: #000; font-weight: bold; }
+        .rank-options label:has(input[type="radio"]:checked) { border-color: #000; background-color: #e0e0e0; }
 
-        /* UI Panel in Bottom Left */
-        .ui-panel { display: flex; flex-direction: column; justify-content: center; padding: 15px; background: #f4f6f8; border: 1px solid #d1d5da; border-radius: 4px; height: 42vh; box-sizing: border-box; }
-        .instruction-text { font-size: 0.95em; line-height: 1.4; margin-bottom: 15px; }
-        .slide-counter { font-weight: bold; font-size: 1.2em; color: #007bff; text-align: center; margin-bottom: 20px; }
+        /* UI Panel in Bottom Left - Completely Colorless */
+        .ui-panel { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 15px; background: transparent; border: none; height: 42vh; box-sizing: border-box; }
+        .instruction-text { font-size: 0.95em; line-height: 1.4; margin-bottom: 15px; text-align: center; }
+        .slide-counter { font-weight: bold; font-size: 1.1em; color: #000; text-align: center; margin-bottom: 20px; }
         
-        /* Buttons inside UI Panel */
-        .controls { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-        button { padding: 12px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; width: 100%; box-sizing: border-box;}
-        button:hover { background-color: #0056b3; }
-        button:disabled { background-color: #999; cursor: not-allowed; }
-        .submit-btn { background-color: #dc3545; }
-        .submit-btn:hover { background-color: #a71d2a; }
-        .error { color: #dc3545; font-weight: bold; font-size: 0.9em; text-align: center; }
+        /* Buttons inside UI Panel - Minimalist */
+        .controls { display: flex; flex-direction: column; align-items: center; gap: 10px; width: auto; }
+        button { padding: 8px 16px; font-size: 14px; cursor: pointer; background-color: transparent; color: #000; border: 1px solid #000; border-radius: 2px; font-weight: normal; width: auto; }
+        button:hover { background-color: #f0f0f0; }
+        button:disabled { border-color: #ccc; color: #999; cursor: not-allowed; }
 
         /* Login Screen */
-        #login-screen { padding: 20px; max-width: 400px; margin: 50px auto; background: #f9f9f9; border: 1px solid #ddd; border-radius: 8px;}
+        #login-screen { padding: 20px; max-width: 400px; margin: 50px auto; background: #fff; border: 1px solid #ccc; border-radius: 4px;}
         .login-group { margin-bottom: 15px; }
-        .login-group input { width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        .login-group input { width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -60,7 +57,7 @@
             <label for="b2-key">B2 Authorization Token:</label>
             <input type="password" id="b2-key" placeholder="Enter B2 token">
         </div>
-        <button onclick="startSession()">Load Images</button>
+        <button onclick="startSession()" style="width: 100%;">Load Images</button>
         <div id="login-error" class="error" style="margin-top:10px;"></div>
     </div>
 
@@ -123,6 +120,7 @@
             renderSlide();
         } catch (err) {
             errorDiv.innerText = err.message;
+            errorDiv.style.color = 'black'; // Keep error neutral too
         }
     }
 
@@ -161,8 +159,8 @@
                 <div class="slide-counter">Slide ${currentSlideIndex + 1} / ${allSlides.length}</div>
                 <div class="controls">
                     <button onclick="nextSlide()" id="next-btn">Next Slide & Save</button>
-                    <button onclick="confirmSubmit()" class="submit-btn">Finish & Submit</button>
-                    <div id="validation-error" class="error"></div>
+                    <button onclick="confirmSubmit()" id="submit-btn">Finish & Submit</button>
+                    <div id="validation-error" class="error" style="color: black; margin-top: 10px;"></div>
                 </div>
             </div>
         `;
@@ -191,7 +189,7 @@
         const numModels = 4;
 
         const selectedRadios = document.querySelectorAll('input[type="radio"]:checked');
-        if (selectedRadios.length < numModels-1) {
+        if (selectedRadios.length < numModels) {
             document.getElementById('validation-error').innerText = `Assign a unique rank to all ${numModels} models.`;
             return;
         }
