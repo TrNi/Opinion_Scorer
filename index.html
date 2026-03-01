@@ -30,7 +30,7 @@
         /* UI Panel in Bottom Left - Completely Colorless */
         .ui-panel { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 15px; background: transparent; border: none; height: 42vh; box-sizing: border-box; }
         .instruction-text { font-size: 0.95em; line-height: 1.4; margin-bottom: 15px; text-align: center; }
-        .slide-counter { font-weight: bold; font-size: 1.1em; color: #000; text-align: center; margin-bottom: 20px; }
+        .slide-counter { font-weight: bold; font-size: 1.1em; color: #000; text-align: center; margin-bottom: 15px; }
         
         /* Buttons inside UI Panel - Minimalist */
         .controls { display: flex; flex-direction: column; align-items: center; gap: 10px; width: auto; }
@@ -76,9 +76,7 @@
 <script>
     // --- CONFIGURATION ---
     const CSV_URL = 'images.csv';
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzadzHFyAAF2EmyYQuKJqLfDDFgWDJuQBJ_XatnbYpCzHzDH4VMivhcfNIw1m893xz6_w/exec';
-        //'https://script.google.com/macros/s/AKfycbwfqReghoS2CrQI0QXc9FLsGEK88nacIoU7Ln57gZ7Na7x8fr9-m8wE0qjGt7Ch3vWcWA/exec';
-        //'https://script.google.com/macros/s/AKfycbwfqReghoS2CrQI0QXc9FLsGEK88nacIoU7Ln57gZ7Na7x8fr9-m8wE0qjGt7Ch3vWcWA/exec'; 
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzadzHFyAAF2EmyYQuKJqLfDDFgWDJuQBJ_XatnbYpCzHzDH4VMivhcfNIw1m893xz6_w/exec'; 
 
     // --- STATE ---
     let subjectId = '';
@@ -122,7 +120,7 @@
             renderSlide();
         } catch (err) {
             errorDiv.innerText = err.message;
-            errorDiv.style.color = 'black'; // Keep error neutral too
+            errorDiv.style.color = 'black'; 
         }
     }
 
@@ -159,6 +157,13 @@
                     <strong>Instruction:</strong><br>Rank model predictions by closeness to the GT blurry image.<br>(1 = Best/Closest, 4 = Worst).
                 </div>
                 <div class="slide-counter">Slide ${currentSlideIndex + 1} / ${allSlides.length}</div>
+                
+                <div style="margin-bottom: 20px; text-align: center;">
+                    <label for="jump-input" style="font-size: 0.85em; font-weight: bold;">Start from index:</label><br>
+                    <input type="number" id="jump-input" placeholder="0" value="${currentSlideIndex}" onchange="jumpToIndex(this.value)" 
+                           style="width: 70px; text-align: center; padding: 4px; margin-top: 4px; border: 1px solid #000; border-radius: 2px;">
+                </div>
+
                 <div class="controls">
                     <button onclick="nextSlide()" id="next-btn">Next Slide & Save</button>
                     <button onclick="confirmSubmit()" id="submit-btn">Finish & Submit</button>
@@ -178,6 +183,21 @@
         grid.innerHTML += buildCard(titles[4], getUrl(rowData[4]), true, 4);     // Model 4
     }
 
+    // --- NEW LOGIC: Jump to Index ---
+    window.jumpToIndex = function(val) {
+        let newIndex = parseInt(val, 10);
+        
+        // Validation: If it's empty, NaN, or out of bounds, default to 0
+        if (isNaN(newIndex) || newIndex < 0 || newIndex >= allSlides.length) {
+            currentSlideIndex = 0;
+        } else {
+            currentSlideIndex = newIndex;
+        }
+        
+        // Re-render the grid instantly at the new index
+        renderSlide();
+    };
+
     window.handleExclusive = function(clickedRadio) {
         const rankValue = clickedRadio.value;
         const allRadios = document.querySelectorAll(`input[type="radio"][value="${rankValue}"]`);
@@ -191,7 +211,7 @@
         const numModels = 4;
 
         const selectedRadios = document.querySelectorAll('input[type="radio"]:checked');
-        if (selectedRadios.length < numModels - 1) {
+        if (selectedRadios.length < numModels-1) {
             document.getElementById('validation-error').innerText = `Assign a unique rank to all ${numModels} models.`;
             return;
         }
@@ -218,7 +238,7 @@
         .then(() => {
             if (currentSlideIndex < allSlides.length - 1) {
                 currentSlideIndex++;
-                renderSlide(); // Re-renders grid, automatically resetting UI state
+                renderSlide(); 
             } else {
                 showCompletion();
             }
@@ -244,6 +264,4 @@
 
 </body>
 </html>
-
-
 
