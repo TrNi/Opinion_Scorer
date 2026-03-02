@@ -154,7 +154,10 @@
         const uiPanelHTML = `
             <div class="ui-panel">
                 <div class="instruction-text">
-                    <strong>Instruction:</strong><br>Rank model predictions by closeness to the GT blurry image.<br>(1 = Best/Closest, 4 = Worst).
+                    <strong>Instruction:</strong>
+                    <br>Rank model predictions by closeness to the GT blurry image.
+                    <br>(1 = Best/Closest, 4 = Worst).
+                    <br>Arrangement of the four models is randomly changing per slide.  
                 </div>
                 <div class="slide-counter">Slide ${currentSlideIndex + 1} / ${allSlides.length}</div>
                 
@@ -264,4 +267,5 @@
 
 </body>
 </html>
+
 
