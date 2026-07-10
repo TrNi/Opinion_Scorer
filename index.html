@@ -280,8 +280,8 @@
 
     window.nextSlide = function() {
         const selectedRadios = document.querySelectorAll('input[type="radio"]:checked');
-        if (selectedRadios.length < 5) {
-            document.getElementById('validation-error').innerText = "Rank all 5 models.";
+        if (selectedRadios.length < 4) {
+            document.getElementById('validation-error').innerText = "Rank all 4 models.";
             return;
         }
 
