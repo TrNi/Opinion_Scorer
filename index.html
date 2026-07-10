@@ -4,71 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Model Prediction Ranking Task</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        /* Extreme High-Density Reset */
         body { font-family: sans-serif; background-color: #fff; margin: 0; padding: 0; color: #111; overflow-x: hidden; }
         .container { width: 100vw; max-width: 100%; margin: 0; padding: 4px; box-sizing: border-box; }
         .hidden { display: none !important; }
 
-        /* 3-Column Grid Layout with Minimal Margins */
-        .image-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        /* Progress Header */
+        .progress-header { display: flex; justify-content: center; gap: 6px; padding: 10px; background: #f9f9f9; border-bottom: 1px solid #ccc; margin-bottom: 10px; }
+        .progress-bar { height: 12px; width: 60px; background-color: #e0e0e0; border-radius: 2px; border: 1px solid #ccc; transition: background-color 0.3s; }
+        .progress-bar.filled { background-color: #28a745; border-color: #218838; } 
 
-        /* Image Cards (No Padding, No Borders) */
+        .image-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
         .image-card { display: flex; flex-direction: column; align-items: center; width: 100%; margin: 0; padding: 0; }
         .img-title { font-weight: bold; margin-bottom: 2px; font-size: 0.9em; text-align: center; background: #fff; width: 100%; }
-        
-        /* Maximize Image Size - Keeps aspect ratio, fills horizontal space */
-        img { width: 100%; height: 38vh; object-fit: contain; display: block; margin: 0; }
+        img { width: 100%; height: 35vh; object-fit: contain; display: block; margin: 0; }
 
-        /* Compact Radio Buttons - Strictly Grayscale */
         .rank-options { display: flex; gap: 4px; justify-content: center; width: 100%; margin-top: 4px; margin-bottom: 4px; }
         .rank-options label { cursor: pointer; padding: 4px 8px; border: 1px solid #ccc; border-radius: 2px; background: #f9f9f9; font-size: 0.85em; }
         .rank-options input[type="radio"] { display: none; }
         .rank-options input[type="radio"]:checked + span { color: #000; font-weight: bold; }
         .rank-options label:has(input[type="radio"]:checked) { border-color: #000; background-color: #e0e0e0; }
 
-        /* Horizontal UI Panel - Spans across all 3 columns */
+        /* UI Panel */
         .ui-panel-horizontal { grid-column: 1 / -1; display: flex; flex-direction: row; justify-content: space-between; align-items: center; padding: 6px 15px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; margin: 2px 0; background: transparent; }
         .instruction-text { font-size: 0.85em; line-height: 1.3; margin: 0; }
         .middle-controls { display: flex; align-items: center; gap: 20px; }
         .slide-counter { font-weight: bold; font-size: 1.05em; color: #000; margin: 0; }
         
-        /* Buttons inside UI Panel - Minimalist */
-        .controls { display: flex; flex-direction: row; align-items: center; gap: 10px; width: auto; }
-        button { padding: 6px 12px; font-size: 14px; cursor: pointer; background-color: transparent; color: #000; border: 1px solid #000; border-radius: 2px; font-weight: normal; width: auto; }
+        .controls { display: flex; flex-direction: row; align-items: center; gap: 8px; width: auto; }
+        button { padding: 6px 12px; font-size: 14px; cursor: pointer; background-color: transparent; color: #000; border: 1px solid #000; border-radius: 2px; font-weight: normal; }
         button:hover { background-color: #f0f0f0; }
         button:disabled { border-color: #ccc; color: #999; cursor: not-allowed; }
 
-        /* Login Screen */
-        #login-screen { padding: 20px; max-width: 400px; margin: 50px auto; background: #fff; border: 1px solid #ccc; border-radius: 4px;}
-        .login-group { margin-bottom: 15px; }
-        .login-group input { width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 2px; }
+        /* Screens */
+        .screen-centered { padding: 20px; max-width: 600px; margin: 50px auto; background: #fff; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+        #login-screen .login-group input { width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; text-align: center; font-size: 1.2em; letter-spacing: 2px; }
+        #instruction-screen img { height: auto; max-height: 60vh; width: 100%; object-fit: contain; border: 1px solid #ccc; margin-bottom: 15px; }
+        #level-screen h1 { font-size: 2.5em; color: #28a745; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="login-screen">
-        <h2 style="margin-top:0;">Start Session</h2>
+    <div id="login-screen" class="screen-centered">
+        <h2 style="margin-top:0;">Evaluation Login</h2>
         <div class="login-group">
-            <label for="subject-id">Subject ID:</label>
-            <input type="text" id="subject-id" placeholder="e.g., subject_01">
+            <label for="subject-id">Enter Subject ID (2 Digits):</label>
+            <input type="text" id="subject-id" placeholder="00" maxlength="2" autocomplete="off">
         </div>
-        <div class="login-group">
-            <label for="b2-key">B2 Authorization Token:</label>
-            <input type="password" id="b2-key" placeholder="Enter B2 token">
-        </div>
-        <button onclick="startSession()" style="width: 100%;">Load Images</button>
-        <div id="login-error" class="error" style="margin-top:10px;"></div>
+        <button onclick="initSession()" style="width: 100%; margin-top: 15px; padding: 12px; font-weight: bold;">Continue</button>
+        <div id="login-error" style="color: black; margin-top:10px; font-weight: bold;"></div>
+    </div>
+
+    <div id="instruction-screen" class="screen-centered hidden">
+        <h2>Instructions</h2>
+        <img src="instructions.jpg" alt="Task Instructions">
+        <p>Please review the instructions above carefully.</p>
+        <button onclick="startTask()" style="padding: 12px 24px; font-size: 16px; font-weight: bold;">Start Task</button>
+    </div>
+
+    <div id="level-screen" class="screen-centered hidden">
+        <h1 id="level-title">Level Complete!</h1>
+        <p id="level-msg">Great job! Take a quick breath.</p>
+        <button onclick="resumeTask()" style="padding: 12px 24px; margin-top: 15px; font-weight: bold;">Continue to Next Level</button>
     </div>
 
     <div id="task-screen" class="hidden">
-        <div class="image-grid" id="image-grid">
-            </div>
+        <div class="progress-header" id="progress-bar-container">
+            <div class="progress-bar" id="bar-1"></div>
+            <div class="progress-bar" id="bar-2"></div>
+            <div class="progress-bar" id="bar-3"></div>
+            <div class="progress-bar" id="bar-4"></div>
+            <div class="progress-bar" id="bar-5"></div>
+        </div>
+        <div class="image-grid" id="image-grid"></div>
     </div>
 
-    <div id="completion-screen" class="hidden" style="text-align: center; padding: 50px;">
-        <h2>Session Complete</h2>
+    <div id="completion-screen" class="screen-centered hidden">
+        <h2>All Levels Complete!</h2>
         <p>Thank you. All your responses have been logged securely.</p>
         <p>You may now close this window.</p>
     </div>
@@ -76,9 +90,8 @@
 
 <script>
     // --- CONFIGURATION ---
-    const CSV_URL = 'images.csv';
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7nipR6PkLttT7oCKkp2oR0UOesvI7IZNx1x3MgNiQH_OaMD-_rWohy6dJGrlYnvP8AQ/exec';        
-
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQB4RFukh1i4bI69_EBK2gcI3cX2dakExU2BeYc91IYYdhI8iNqlDjeEUHdqh7eQ4Ztw/exec'; 
+    
     // --- STATE ---
     let subjectId = '';
     let b2AuthToken = '';
@@ -86,50 +99,64 @@
     let allSlides = [];
     let currentSlideIndex = 0;
 
-    const titles = [
-        "Blurry GT Image",
-        "Model 1 Prediction",
-        "Model 2 Prediction",
-        "Model 3 Prediction",
-        "Model 4 Prediction",
-        "Model 5 Prediction"
-    ];
+    const titles = [ "Blurry GT", "Model 1", "Model 2", "Model 3", "Model 4", "Model 5" ];
 
-    async function startSession() {
-        subjectId = document.getElementById('subject-id').value.trim();
-        b2AuthToken = document.getElementById('b2-key').value.trim();
+    async function initSession() {
+        const inputStr = document.getElementById('subject-id').value.trim();
         const errorDiv = document.getElementById('login-error');
 
-        if (!subjectId || !b2AuthToken) {
-            errorDiv.innerText = "Please provide both Subject ID and B2 Key.";
+        if (!/^\d{2}$/.test(inputStr)) {
+            errorDiv.innerText = "Please enter exactly two digits (e.g., 04, 12).";
             return;
         }
         
+        subjectId = inputStr;
         sessionId = `sess_${Date.now()}`;
-        errorDiv.innerText = "Loading CSV...";
+        errorDiv.innerText = "Authenticating with server...";
 
         try {
-            const response = await fetch(CSV_URL);
-            if (!response.ok) throw new Error("Could not fetch CSV.");
+            // 1. Securely fetch the Backblaze Token from Google Apps Script
+            const tokenRes = await fetch(GOOGLE_SCRIPT_URL);
+            const tokenData = await tokenRes.json();
+            
+            if (tokenData.result !== 'success') {
+                throw new Error("Server Authentication failed. Please check backend config.");
+            }
+            b2AuthToken = tokenData.token;
+
+            // 2. Determine CSV based on modulo 10
+            errorDiv.innerText = "Loading Dataset...";
+            const csvNumber = parseInt(subjectId, 10) % 10;
+            const csvUrl = `images_${csvNumber}.csv`;
+
+            // 3. Fetch the mapped CSV
+            const response = await fetch(csvUrl);
+            if (!response.ok) throw new Error(`Could not find ${csvUrl}`);
             const text = await response.text();
             
             allSlides = text.trim().split('\n').map(line => line.split(',').map(url => url.trim()));
             if (allSlides.length === 0) throw new Error("CSV is empty.");
 
+            // Transition to Instruction Slide
             document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('task-screen').classList.remove('hidden');
+            document.getElementById('instruction-screen').classList.remove('hidden');
             
-            renderSlide();
         } catch (err) {
             errorDiv.innerText = err.message;
-            errorDiv.style.color = 'black'; 
         }
     }
 
+    function startTask() {
+        document.getElementById('instruction-screen').classList.add('hidden');
+        document.getElementById('task-screen').classList.remove('hidden');
+        renderSlide();
+    }
+
     function renderSlide() {
+        updateProgressBar();
         const rowData = allSlides[currentSlideIndex];
         const grid = document.getElementById('image-grid');
-        grid.innerHTML = ''; // Clear previous
+        grid.innerHTML = ''; 
 
         const getUrl = (url) => url ? `${url}?Authorization=${encodeURIComponent(b2AuthToken)}` : '';
 
@@ -140,12 +167,8 @@
                             <img src="${url}" alt="${title}">`;
             if (isModel) {
                 html += `<div class="rank-options">`;
-                // Expanded to 5 ranks
                 [1, 2, 3, 4, 5].forEach(rank => {
-                    html += `<label>
-                                <input type="radio" name="model_${modelIndex}" value="${rank}" onclick="handleExclusive(this)">
-                                <span>Rank ${rank}</span>
-                             </label>`;
+                    html += `<label><input type="radio" name="model_${modelIndex}" value="${rank}" onclick="handleExclusive(this)"><span>Rank ${rank}</span></label>`;
                 });
                 html += `</div>`;
             }
@@ -153,49 +176,83 @@
             return html;
         };
 
-        // Horizontal UI Panel HTML
         const uiPanelHTML = `
             <div class="ui-panel-horizontal">
                 <div class="instruction-text">
-                    <strong>Instruction:</strong> Rank model predictions by closeness to the GT blurry image. (1 = Best, 5 = Worst).<br>
-                    Arrangement of the models is randomly changing per slide.  
+                    <strong>Rank model predictions</strong> (1 = Best, 5 = Worst).
                 </div>
                 
                 <div class="middle-controls">
-                    <div class="slide-counter">Slide ${currentSlideIndex + 1} / ${allSlides.length}</div>
+                    <div class="slide-counter">Slide ${currentSlideIndex + 1}</div>
                     <div style="display: flex; align-items: center; gap: 5px;">
-                        <label for="jump-input" style="font-size: 0.85em; font-weight: bold;">Start index:</label>
+                        <label for="jump-input" style="font-size: 0.85em;">Start index:</label>
                         <input type="number" id="jump-input" placeholder="0" value="${currentSlideIndex}" onchange="jumpToIndex(this.value)" 
-                               style="width: 50px; text-align: center; padding: 2px; border: 1px solid #000; border-radius: 2px;">
+                               style="width: 50px; text-align: center; border: 1px solid #000; border-radius: 2px;">
                     </div>
                 </div>
 
                 <div class="controls">
-                    <div id="validation-error" class="error" style="color: black; margin-right: 10px; font-size: 0.85em;"></div>
-                    <button onclick="nextSlide()" id="next-btn">Next Slide & Save</button>
-                    <button onclick="confirmSubmit()" id="submit-btn">Finish & Submit</button>
+                    <div id="validation-error" style="color: black; margin-right: 10px; font-size: 0.85em; font-weight:bold;"></div>
+                    <button onclick="goBack()" id="back-btn" ${currentSlideIndex === 0 ? 'disabled' : ''}>Back</button>
+                    <button onclick="skipSlide()" id="skip-btn">Skip</button>
+                    <button onclick="nextSlide()" id="next-btn">Next & Save</button>
                 </div>
             </div>
         `;
 
-        // Inject Top Row (GT, Model 1, Model 2)
-        grid.innerHTML += buildCard(titles[0], getUrl(rowData[0]), false, null); // GT
-        grid.innerHTML += buildCard(titles[1], getUrl(rowData[1]), true, 1);     // Model 1
-        grid.innerHTML += buildCard(titles[2], getUrl(rowData[2]), true, 2);     // Model 2
+        grid.innerHTML += buildCard(titles[0], getUrl(rowData[0]), false, null); 
+        grid.innerHTML += buildCard(titles[1], getUrl(rowData[1]), true, 1);     
+        grid.innerHTML += buildCard(titles[2], getUrl(rowData[2]), true, 2);     
 
-        // Inject Horizontal Strip (Spans all columns)
         grid.innerHTML += uiPanelHTML;                                           
 
-        // Inject Bottom Row (Model 3, Model 4, Model 5)
-        grid.innerHTML += buildCard(titles[3], getUrl(rowData[3]), true, 3);     // Model 3
-        grid.innerHTML += buildCard(titles[4], getUrl(rowData[4]), true, 4);     // Model 4
-        grid.innerHTML += buildCard(titles[5], getUrl(rowData[5]), true, 5);     // Model 5
+        grid.innerHTML += buildCard(titles[3], getUrl(rowData[3]), true, 3);     
+        grid.innerHTML += buildCard(titles[4], getUrl(rowData[4]), true, 4);     
+        grid.innerHTML += buildCard(titles[5], getUrl(rowData[5]), true, 5);     
     }
 
-    // --- NEW LOGIC: Jump to Index ---
+    function updateProgressBar() {
+        const percentage = ((currentSlideIndex) / allSlides.length) * 100;
+        const barsToFill = Math.floor((percentage / 100) * 5) + 1; 
+
+        for (let i = 1; i <= 5; i++) {
+            const bar = document.getElementById(`bar-${i}`);
+            if (i <= barsToFill) {
+                bar.classList.add('filled');
+            } else {
+                bar.classList.remove('filled');
+            }
+        }
+    }
+
+    function checkLevelUp() {
+        if (currentSlideIndex === 13) {
+            triggerCelebration("Level 1 Complete!", "Great job! Take a quick breath.");
+            return true;
+        }
+        if (currentSlideIndex === 39) {
+            triggerCelebration("Level 2 Complete!", "Amazing! You are in the final stretch.");
+            return true;
+        }
+        return false;
+    }
+
+    function triggerCelebration(title, msg) {
+        document.getElementById('task-screen').classList.add('hidden');
+        document.getElementById('level-title').innerText = title;
+        document.getElementById('level-msg').innerText = msg;
+        document.getElementById('level-screen').classList.remove('hidden');
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+    }
+
+    window.resumeTask = function() {
+        document.getElementById('level-screen').classList.add('hidden');
+        document.getElementById('task-screen').classList.remove('hidden');
+        renderSlide();
+    }
+
     window.jumpToIndex = function(val) {
         let newIndex = parseInt(val, 10);
-        
         if (isNaN(newIndex) || newIndex < 0 || newIndex >= allSlides.length) {
             currentSlideIndex = 0;
         } else {
@@ -207,37 +264,46 @@
     window.handleExclusive = function(clickedRadio) {
         const rankValue = clickedRadio.value;
         const allRadios = document.querySelectorAll(`input[type="radio"][value="${rankValue}"]`);
-        allRadios.forEach(radio => {
-            if (radio !== clickedRadio) radio.checked = false;
-        });
+        allRadios.forEach(radio => { if (radio !== clickedRadio) radio.checked = false; });
+    };
+
+    window.goBack = function() {
+        if (currentSlideIndex > 0) {
+            currentSlideIndex--;
+            renderSlide();
+        }
+    };
+
+    window.skipSlide = function() {
+        submitData({ status: 'skipped' });
     };
 
     window.nextSlide = function() {
-        const currentSlideData = allSlides[currentSlideIndex];
-        const numModels = 5; // Updated to 5 models
-
         const selectedRadios = document.querySelectorAll('input[type="radio"]:checked');
-        
-        // Fixed Validation Rule: Requires all 5 models to be selected.
-        if (selectedRadios.length < numModels) {
-            document.getElementById('validation-error').innerText = `Assign a unique rank to all ${numModels} models.`;
+        if (selectedRadios.length < 5) {
+            document.getElementById('validation-error').innerText = "Rank all 5 models.";
             return;
         }
 
-        const btn = document.getElementById('next-btn');
-        btn.disabled = true;
-        btn.innerText = "Saving...";
-        document.getElementById('validation-error').innerText = ''; // Clear error on successful click
-
         let slideRankings = {};
         selectedRadios.forEach(radio => { slideRankings[radio.name] = radio.value; });
+        submitData(slideRankings);
+    };
+
+    function submitData(rankingsData) {
+        const btn = document.getElementById('next-btn');
+        const skipBtn = document.getElementById('skip-btn');
+        btn.disabled = true;
+        skipBtn.disabled = true;
+        btn.innerText = "Saving...";
+        document.getElementById('validation-error').innerText = ''; 
 
         const payload = {
             session_id: sessionId,
             subject_id: subjectId,
             slide: currentSlideIndex + 1,
-            gt_url: currentSlideData[0] || '', 
-            rankings: slideRankings
+            gt_url: allSlides[currentSlideIndex][0] || '', 
+            rankings: rankingsData
         };
 
         fetch(GOOGLE_SCRIPT_URL, {
@@ -245,29 +311,23 @@
             body: JSON.stringify(payload)
         })
         .then(() => {
-            if (currentSlideIndex < allSlides.length - 1) {
-                currentSlideIndex++;
-                renderSlide(); 
+            currentSlideIndex++;
+            if (currentSlideIndex < allSlides.length) {
+                if (!checkLevelUp()) {
+                    renderSlide(); 
+                }
             } else {
-                showCompletion();
+                document.getElementById('task-screen').classList.add('hidden');
+                document.getElementById('completion-screen').classList.remove('hidden');
+                confetti({ particleCount: 300, spread: 120, origin: { y: 0.5 } }); 
             }
         })
         .catch(err => {
             btn.disabled = false;
-            btn.innerText = "Next Slide & Save";
+            skipBtn.disabled = false;
+            btn.innerText = "Next & Save";
             document.getElementById('validation-error').innerText = "Network error saving data.";
         });
-    };
-
-    window.confirmSubmit = function() {
-        if(confirm("Are you sure you want to finish and submit early? Uncompleted slides will be skipped.")) {
-            showCompletion();
-        }
-    };
-
-    function showCompletion() {
-        document.getElementById('task-screen').classList.add('hidden');
-        document.getElementById('completion-screen').classList.remove('hidden');
     }
 </script>
 
