@@ -127,7 +127,7 @@
             // 2. Determine CSV based on modulo 10
             errorDiv.innerText = "Loading Dataset...";
             const csvNumber = parseInt(subjectId, 10) % 10;
-            const csvUrl = `images_${csvNumber}.csv`;
+            const csvUrl = `urls_${csvNumber}.csv`;
 
             // 3. Fetch the mapped CSV
             const response = await fetch(csvUrl);
