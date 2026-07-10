@@ -97,9 +97,9 @@
     let b2AuthToken = '';
     let sessionId = ''; 
     let allSlides = [];
-    let currentSlideIndex = 0;
+    let currentSlideIndex = 1;
 
-    const titles = [ "Blurry GT", "Model 1", "Model 2", "Model 3", "Model 4", "Model 5" ];
+    const titles = [ "Ground Truth (Reference)", "Prediction 1", "Prediction 2", "Prediction 3", "Prediction 4", "Prediction 5" ];
 
     async function initSession() {
         const inputStr = document.getElementById('subject-id').value.trim();
@@ -268,7 +268,7 @@
     };
 
     window.goBack = function() {
-        if (currentSlideIndex > 0) {
+        if (currentSlideIndex > 1) {
             currentSlideIndex--;
             renderSlide();
         }
