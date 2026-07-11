@@ -167,7 +167,7 @@
                             <img src="${url}" alt="${title}">`;
             if (isModel) {
                 html += `<div class="rank-options">`;
-                [1, 2, 3, 4, 5].forEach(rank => {
+                [1, 2, 3, 4].forEach(rank => {
                     html += `<label><input type="radio" name="model_${modelIndex}" value="${rank}" onclick="handleExclusive(this)"><span>Rank ${rank}</span></label>`;
                 });
                 html += `</div>`;
@@ -179,7 +179,7 @@
         const uiPanelHTML = `
             <div class="ui-panel-horizontal">
                 <div class="instruction-text">
-                    <strong>Rank model predictions</strong> (1 = Best, 5 = Worst).
+                    <strong>Rank model predictions</strong> (1 = Best, 4 = Worst).
                 </div>
                 
                 <div class="middle-controls">
